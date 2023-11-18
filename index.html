@@ -4,9 +4,16 @@
     <title>Simple Calculator</title>
   </head>
   <body style="background-color: #222">
-    <!-- I like single line unreadable chaos but this is just CSS -->
+    <!-- CSS -->
     <style>
-      .unselectable{user-select:none}table{width:500px;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%)}table,td,th,tr{border:1px solid #222;border-radius:6px;color:#eee;font:20px "Segoe UI Semibold",serif;height:60px;padding:2px;text-align:center}table,th{background-color:#222}td{background-color:#555;width:50px}td,td:hover{transition:background-color .2s}td:hover{background-color:#2f4f4f}th{border:0;font-weight:400;padding:4px;text-align:right;vertical-align:bottom}
+      .unselectable{user-select:none}
+      table{left:50%;position:absolute;top:50%;transform:translate(-50%,-50%);width:500px}
+      table,td,th,tr{border:1px solid #222;border-radius:6px;color:#eee;font:20px "Segoe UI Semibold",serif;height:60px;padding:2px;text-align:center}
+      table,th{background-color:#222}
+      td{background-color:#555;width:50px}
+      td,td:hover{transition:background-color .2s}
+      td:hover{background-color:#2f4f4f}
+      th{border:0;font-weight:400;padding:4px;text-align:right;vertical-align:bottom}
     </style>
     <!-- Table with 2 headers as a result and history and 20 cells for buttons -->
     <table>
@@ -19,10 +26,15 @@
       <!-- onclick to detect a click event to fire corresponding functions -->
       <!-- Unselectable for better UX -->
       <tr>
-        <td class="unselectable" onclick="clearScreen()">CLR</td>
+        <td class="unselectable" onclick="clearScreen()" colspan="2">CLR</td>
         <td class="unselectable" onclick="deleteLast()">DEL</td>
-        <td class="unselectable" onclick="appendOperator('/')">&divide;</td>
         <td class="unselectable" onclick="appendOperator('%')">&percnt;</td>
+      </tr>
+      <tr>
+        <td class="unselectable" onclick="appendOperator('1/x')">1/x</td>
+        <td class="unselectable" onclick="appendOperator('sq')">x<sup>2</sup></td>
+        <td class="unselectable" onclick="appendOperator('sqrt')">&Sqrt;x</td>
+        <td class="unselectable" onclick="appendOperator('/')">/</td>
       </tr>
       <tr>
         <td class="unselectable" onclick="appendNumber('7')">7</td>
@@ -54,7 +66,9 @@
       const result = document.getElementById("result")
       const prev = document.getElementById("prev")
       let currentNumber = '';
+      let prevOperator = '';
       let operator = '';
+      let operatorTemp = '';
       let firstOperand = '';
       let secondOperand = '';
       // Save every number press to currentNumber and display to result header
@@ -65,8 +79,13 @@
       // Save currentNumber as firstOperand whenever an operator is pressed and
       // call calculate() after the secondOperand is saved
       function appendOperator(op) {
-        if (op === '+-') {
-          changeSign();
+        prevOperator = op;
+        if (op === '+-' || op === '1/x' || op === 'sq' || op === 'sqrt') {
+          // remember prev op and do unary calc on the second operand
+          operatorTemp = operator;
+          operator = op;
+          calculate();
+          operator = operatorTemp;
           return;
         }
         if (firstOperand === '') {
@@ -76,11 +95,11 @@
           prev.innerHTML = firstOperand + op
         } else {
           secondOperand = currentNumber;
+          prev.innerHTML += secondOperand + op
           calculate();
-          firstOperand = result.innerHTML;
+          currentNumber = result.innerHTML;
           operator = op;
-          currentNumber = '';
-          prev.innerHTML = firstOperand + op
+          firstOperand = '';
         }
       }
       // Magic? No. Literally does the calculations
@@ -97,30 +116,37 @@
             resultValue = parseFloat(firstOperand) * parseFloat(secondOperand);
             break;
           case '/':
-            if (secondOperand === 0){
-              resultValue = "Can't divide by 0" // IDK why this doesn't work.
-              break;
+            if (Number(secondOperand) === 0){
+              result.innerHTML = "Can't divide by 0";
+              prev.innerHTML = '';
+              return;
             }
             resultValue = parseFloat(firstOperand) / parseFloat(secondOperand);
             break;
           case '%':
             resultValue = parseFloat(firstOperand) * parseFloat(secondOperand) / 100;
             break;
+          case '1/x':
+            currentNumber = 1/parseFloat(currentNumber);
+            resultValue = currentNumber
+            break;
+          case 'sq':
+            currentNumber = parseFloat(currentNumber)**2;
+            resultValue = currentNumber
+            break;
+          case 'sqrt':
+            if (currentNumber < 0){result.innerHTML = 'Not a real number';return;}
+            currentNumber = Math.sqrt(currentNumber);
+            resultValue = currentNumber
+            break;
+          case '+-':
+            currentNumber = -parseFloat(currentNumber)
+            resultValue = currentNumber
+            break;
         }
         // Display float numbers up to 6 decimal places
-        // While writing the above comment the calculator decided it was time to
-        // commit unlive for no reason at all. 3:28 AM.
-        // Isn't it weird that "<!-- -->" breaks JS even though it looks like a comment line?
         result.innerHTML = parseFloat(resultValue.toFixed(6));
-        firstOperand = resultValue;
-        secondOperand = ''; // Reset secondOperand
       }
-      // Negation operation on whatever operand is on display
-      function changeSign() {
-        currentNumber = -parseFloat(currentNumber);
-        result.innerHTML = currentNumber;
-      }
-      // Self-explanatory
       function clearScreen() {
         currentNumber = '';
         operator = '';
