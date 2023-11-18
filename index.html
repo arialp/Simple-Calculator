@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="">
+  <head>
+    <title>Simple Calculator</title>
+  </head>
+  <body style="background-color: #222">
+    <!-- I like single line unreadable chaos but this is just CSS -->
+    <style>
+      .unselectable{user-select:none}table{width:500px;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%)}table,td,th,tr{border:1px solid #222;border-radius:6px;color:#eee;font:20px "Segoe UI Semibold",serif;height:60px;padding:2px;text-align:center}table,th{background-color:#222}td{background-color:#555;width:50px}td,td:hover{transition:background-color .2s}td:hover{background-color:#2f4f4f}th{border:0;font-weight:400;padding:4px;text-align:right;vertical-align:bottom}
+    </style>
+    <!-- Table with 2 headers as a result and history and 20 cells for buttons -->
+    <table>
+      <tr style="height: 30px">
+        <th colspan="4" id="prev" style="font-size: 20px; color: #999"></th>
+      </tr>
+      <tr style="height: 70px">
+        <th colspan="4" id="result" style="font-size: 50px">0</th>
+      </tr>
+      <!-- onclick to detect a click event to fire corresponding functions -->
+      <!-- Unselectable for better UX -->
+      <tr>
+        <td class="unselectable" onclick="clearScreen()">CLR</td>
+        <td class="unselectable" onclick="deleteLast()">DEL</td>
+        <td class="unselectable" onclick="appendOperator('/')">&divide;</td>
+        <td class="unselectable" onclick="appendOperator('%')">&percnt;</td>
+      </tr>
+      <tr>
+        <td class="unselectable" onclick="appendNumber('7')">7</td>
+        <td class="unselectable" onclick="appendNumber('8')">8</td>
+        <td class="unselectable" onclick="appendNumber('9')">9</td>
+        <td class="unselectable" onclick="appendOperator('*')">&times;</td>
+      </tr>
+      <tr>
+        <td class="unselectable" onclick="appendNumber('4')">4</td>
+        <td class="unselectable" onclick="appendNumber('5')">5</td>
+        <td class="unselectable" onclick="appendNumber('6')">6</td>
+        <td class="unselectable" onclick="appendOperator('-')">&minus;</td>
+      </tr>
+      <tr>
+        <td class="unselectable" onclick="appendNumber('1')">1</td>
+        <td class="unselectable" onclick="appendNumber('2')">2</td>
+        <td class="unselectable" onclick="appendNumber('3')">3</td>
+        <td class="unselectable" onclick="appendOperator('+')">&plus;</td>
+      </tr>
+      <tr>
+        <td class="unselectable" onclick="appendOperator('+-')">&plusmn;</td>
+        <td class="unselectable" onclick="appendNumber('0')">0</td>
+        <td class="unselectable" onclick="appendNumber('.')">&period;</td>
+        <td class="unselectable" onclick="appendOperator('=')">&equals;</td>
+      </tr>
+    </table>
+    <!-- All the JS stuff -->
+    <script>
+      const result = document.getElementById("result")
+      const prev = document.getElementById("prev")
+      let currentNumber = '';
+      let operator = '';
+      let firstOperand = '';
+      let secondOperand = '';
+      // Save every number press to currentNumber and display to result header
+      function appendNumber(number) {
+        currentNumber += number;
+        result.innerHTML = currentNumber;
+      }
+      // Save currentNumber as firstOperand whenever an operator is pressed and
+      // call calculate() after the secondOperand is saved
+      function appendOperator(op) {
+        if (op === '+-') {
+          changeSign();
+          return;
+        }
+        if (firstOperand === '') {
+          firstOperand = currentNumber;
+          operator = op;
+          currentNumber = '';
+          prev.innerHTML = firstOperand + op
+        } else {
+          secondOperand = currentNumber;
+          calculate();
+          firstOperand = result.innerHTML;
+          operator = op;
+          currentNumber = '';
+          prev.innerHTML = firstOperand + op
+        }
+      }
+      // Magic? No. Literally does the calculations
+      function calculate() {
+        let resultValue = 0;
+        switch (operator) {
+          case '+':
+            resultValue = parseFloat(firstOperand) + parseFloat(secondOperand);
+            break;
+          case '-':
+            resultValue = parseFloat(firstOperand) - parseFloat(secondOperand);
+            break;
+          case '*':
+            resultValue = parseFloat(firstOperand) * parseFloat(secondOperand);
+            break;
+          case '/':
+            if (secondOperand === 0){
+              resultValue = "Can't divide by 0" // IDK why this doesn't work.
+              break;
+            }
+            resultValue = parseFloat(firstOperand) / parseFloat(secondOperand);
+            break;
+          case '%':
+            resultValue = parseFloat(firstOperand) * parseFloat(secondOperand) / 100;
+            break;
+        }
+        // Display float numbers up to 6 decimal places
+        // While writing the above comment the calculator decided it was time to
+        // commit unlive for no reason at all. 3:28 AM.
+        // Isn't it weird that "<!-- -->" breaks JS even though it looks like a comment line?
+        result.innerHTML = parseFloat(resultValue.toFixed(6));
+        firstOperand = resultValue;
+        secondOperand = ''; // Reset secondOperand
+      }
+      // Negation operation on whatever operand is on display
+      function changeSign() {
+        currentNumber = -parseFloat(currentNumber);
+        result.innerHTML = currentNumber;
+      }
+      // Self-explanatory
+      function clearScreen() {
+        currentNumber = '';
+        operator = '';
+        firstOperand = '';
+        secondOperand = '';
+        result.innerHTML = '0';
+        prev.innerHTML = '';
+      }
+      // Backspace. Delete the last written number.
+      function deleteLast() {
+        currentNumber = currentNumber.slice(0, -1);
+        result.innerHTML = currentNumber;
+      }
+    </script>
+  </body>
+</html>
